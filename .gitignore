@@ -1,0 +1,24 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+.env/
+venv/
+SelfRagVenv/
+
+# Environment variables
+.env
+
+# VSCode settings
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
