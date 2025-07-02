@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
+from typing import List
+from backend.models.chunk_document import ChunkDocument
 
 class BaseGenerator(ABC):
     @abstractmethod
-    def generate_answer(self, question: str, context: str) -> str:
+    def generate_answer(self, question: str, context_chunks: List[ChunkDocument]) -> str:
         """
-        Generates an answer based on the provided question and context.
+        Generates an answer to the given question based on the provided context chunks.
 
         :param question: The question to be answered.
-        :param context: The context in which the question is asked.
-        :return: The generated answer as a string.
+        :param context_chunks: List of ChunkDocument objects providing context for the answer.
+        :return: A string containing the generated answer.
         """
         pass

@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List
+from backend.models.chunk_document import ChunkDocument
 
 class BaseEmbedder(ABC):
     @abstractmethod
-    def embed(self, texts: List[str]) -> List[List[float]]:
+    def embed(self, documents: List[ChunkDocument]) -> List[List[float]]:
         """
-        Embeds a list of texts into vector representations.
+        Embed the provided documents into vector representations.
 
-        :param texts: A list of strings to be embedded.
-        :return: A list of lists, where each inner list is a vector representation of the corresponding text.
+        :param documents: List of ChunkDocument objects to be embedded.
+        :return: List of vectors representing the embedded documents.
         """
         pass

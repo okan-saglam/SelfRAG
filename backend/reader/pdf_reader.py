@@ -1,14 +1,12 @@
 import fitz # PyMuPDF
+from typing import List, Tuple
 from backend.reader.base_reader import BaseReader
 
 class PDFReader(BaseReader):
-    def read(self, file_path: str) -> str:
-        try:
-            doc = fitz.open(file_path)
-            text = ""
-            for page in doc:
-                text += page.get_text()
-            doc.close()
-            return text
-        except Exception as e:
-            raise RuntimeError(f"Failed to read PDF file: {e}")
+    def read(self, file_path: str) -> List[Tuple[int, str]]:
+        doc = fitz.open(file_path)
+        pages = []
+        for page_num, page in enumerate(doc, start=1):
+            text = page.get_text()
+            pages.append((page_num, text))
+        return pages

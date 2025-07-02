@@ -1,7 +1,9 @@
 import cohere
 import os
+from typing import List
 from dotenv import load_dotenv
 from backend.generator.base_generator import BaseGenerator
+from backend.models.chunk_document import ChunkDocument
 
 class CohereGenerator(BaseGenerator):
     def __init__(self):
@@ -16,14 +18,17 @@ class CohereGenerator(BaseGenerator):
             raise ValueError("COHERE_API_KEY environment variable is not set.")
         self.client = cohere.Client(api_key)
         
-    def generate_answer(self, question: str, context: str) -> str:
+    def generate_answer(self, question: str, context_chunks: List[ChunkDocument]) -> str:
+        # Merge chunk texts
+        context_text = "\n---\n".join(chunk.text for chunk in context_chunks)
+
         prompt = (
             f"Answer the question based on the context provided.\n\n"
-            f"Context: {context}\n\n"
+            f"Context: {context_text}\n\n"
             f"Question: {question}\n\n"
             f"Answer:"
         )
-        
+
         response = self.client.generate(
             prompt=prompt,
             model="command-r-plus",
