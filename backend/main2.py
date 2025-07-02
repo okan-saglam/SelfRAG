@@ -2,15 +2,11 @@ import sys
 import os
 
 # Add the project root directory to Python path
-# Since this file is in backend/main.py, we need to go up one level to reach project root
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 from backend.reader.pdf_reader import PDFReader
-# from backend.chunker.hf_token_chunker import HFTokenChunker
-# from backend.chunker.recursive_chunker import RecursiveChunker
-# from backend.chunker.semantic_preserving_chunker import SemanticPreservingChunker
-from backend.chunker.structure_aware_chunker import StructureAwareChunker
+from backend.chunker.semantic_splitter import SemanticTextSplitter
 from backend.embedder.hf_embedder import HuggingFaceEmbedder
 from backend.vectorstore.faiss_store import FaissVectorStore
 from backend.generator.cohere_generator import CohereGenerator
@@ -18,18 +14,33 @@ from backend.models.chunk_document import ChunkDocument
 
 def build_index(pdf_paths: list[str]) -> tuple[FaissVectorStore, HuggingFaceEmbedder, CohereGenerator]:
     reader = PDFReader()
-    chunker = StructureAwareChunker()
+    chunker = SemanticTextSplitter()
     embedder = HuggingFaceEmbedder()
     vectorstore = FaissVectorStore()
     generator = CohereGenerator()
+
+    global_chunk_id = 0
 
     for path in pdf_paths:
         print(f"\n📄 Processing: {path}")
         source_file = os.path.basename(path)
         pages = reader.read(path)
-        chunk_docs = chunker.chunk(pages, source_file)
-        embeddings = embedder.embed(chunk_docs)
-        vectorstore.add(embeddings, chunk_docs)
+
+        for page_number, text in pages:
+            chunks = chunker.split_text(text)
+            chunk_docs = [
+                ChunkDocument(
+                    text=chunk,
+                    page=page_number,
+                    chunk_id=global_chunk_id + i,
+                    source_file=source_file
+                )
+                for i, chunk in enumerate(chunks)
+            ]
+            global_chunk_id += len(chunk_docs)
+
+            embeddings = embedder.embed(chunk_docs)
+            vectorstore.add(embeddings, chunk_docs)
 
     return vectorstore, embedder, generator
 
@@ -57,7 +68,6 @@ def interactive_qa(vectorstore: FaissVectorStore, embedder: HuggingFaceEmbedder,
         print(answer)
 
 if __name__ == "__main__":
-    # Example usage
     pdf_dir = "data/"
     pdf_files = [os.path.join(pdf_dir, f) for f in os.listdir(pdf_dir) if f.endswith(".pdf")]
 
