@@ -16,15 +16,33 @@ from backend.vectorstore.faiss_store import FaissVectorStore
 from backend.generator.cohere_generator import CohereGenerator
 from backend.reranker.hf_reranker import HuggingFaceReranker
 from backend.models.chunk_document import ChunkDocument
+from backend.utils.index_manager import IndexManager
 
-def build_index(pdf_paths: list[str]) -> tuple[FaissVectorStore, HuggingFaceEmbedder, CohereGenerator]:
+def build_index(pdf_paths: list[str], force_rebuild: bool = False) -> tuple[FaissVectorStore, HuggingFaceEmbedder, CohereGenerator, HuggingFaceReranker]:
+    # Initialize components
     reader = PDFReader()
     chunker = StructureAwareChunker()
     embedder = HuggingFaceEmbedder()
     vectorstore = FaissVectorStore()
     generator = CohereGenerator()
     reranker = HuggingFaceReranker()
-
+    
+    # Initialize index manager
+    index_manager = IndexManager()
+    index_path = index_manager.get_index_path(pdf_paths)
+    
+    # Check if we can load existing index
+    if not force_rebuild and vectorstore.exists(index_path):
+        print(f"🔍 Found existing index at: {index_path}")
+        if vectorstore.load(index_path):
+            print("✅ Successfully loaded existing index!")
+            return vectorstore, embedder, generator, reranker
+        else:
+            print("⚠️ Failed to load existing index, rebuilding...")
+    
+    # Build new index
+    print("🔧 Building new index...")
+    
     for path in pdf_paths:
         print(f"\n📄 Processing: {path}")
         source_file = os.path.basename(path)
@@ -32,6 +50,13 @@ def build_index(pdf_paths: list[str]) -> tuple[FaissVectorStore, HuggingFaceEmbe
         chunk_docs = chunker.chunk(pages, source_file)
         embeddings = embedder.embed(chunk_docs)
         vectorstore.add(embeddings, chunk_docs)
+
+    # Save the new index
+    print(f"\n💾 Saving index to: {index_path}")
+    vectorstore.save(index_path)
+    
+    # Cleanup old indices
+    index_manager.cleanup_old_indices(keep_latest=3)
 
     return vectorstore, embedder, generator, reranker
 
@@ -72,5 +97,10 @@ if __name__ == "__main__":
         print("⚠️ No PDF files found in data/ folder.")
         sys.exit(1)
 
-    vectorstore, embedder, generator, reranker = build_index(pdf_files)
+    # Check for force rebuild flag
+    force_rebuild = "--rebuild" in sys.argv
+    if force_rebuild:
+        print("🔨 Force rebuild requested!")
+
+    vectorstore, embedder, generator, reranker = build_index(pdf_files, force_rebuild)
     interactive_qa(vectorstore, embedder, generator, reranker)

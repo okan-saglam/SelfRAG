@@ -23,3 +23,32 @@ class BaseVectorStore(ABC):
         :return: A list of tuples containing ChunkDocument and similarity score.
         """
         pass
+    
+    @abstractmethod
+    def save(self, index_path: str) -> None:
+        """
+        Save the vector store index and metadata to disk.
+        
+        :param index_path: Path where to save the index files.
+        """
+        pass
+    
+    @abstractmethod
+    def load(self, index_path: str) -> bool:
+        """
+        Load the vector store index and metadata from disk.
+        
+        :param index_path: Path where the index files are stored.
+        :return: True if loading was successful, False otherwise.
+        """
+        pass
+    
+    @abstractmethod
+    def exists(self, index_path: str) -> bool:
+        """
+        Check if an index exists at the given path.
+        
+        :param index_path: Path to check for index files.
+        :return: True if index exists, False otherwise.
+        """
+        pass
