@@ -4,6 +4,7 @@ from typing import List
 from dotenv import load_dotenv
 from backend.generator.base_generator import BaseGenerator
 from backend.models.chunk_document import ChunkDocument
+from backend.prompt.prompt_template import default_prompt_template
 
 class CohereGenerator(BaseGenerator):
     def __init__(self):
@@ -20,19 +21,14 @@ class CohereGenerator(BaseGenerator):
         
     def generate_answer(self, question: str, context_chunks: List[ChunkDocument]) -> str:
         # Merge chunk texts
-        context_text = "\n---\n".join(chunk.text for chunk in context_chunks)
+        context_texts = [chunk.text for chunk in context_chunks]
 
-        prompt = (
-            f"Answer the question based on the context provided.\n\n"
-            f"Context: {context_text}\n\n"
-            f"Question: {question}\n\n"
-            f"Answer:"
-        )
+        prompt = default_prompt_template.format(question=question, contexts=context_texts)
 
         response = self.client.generate(
             prompt=prompt,
             model="command-r-plus",
-            max_tokens=200,
+            max_tokens=300,
             temperature=0.3,
         )
         

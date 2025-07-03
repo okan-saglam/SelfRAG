@@ -7,7 +7,7 @@ from backend.models.chunk_document import ChunkDocument
 
 
 class StructureAwareChunker(BaseChunker):
-    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", max_tokens: int = 500):
+    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", max_tokens: int = 480):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.max_tokens = max_tokens
 

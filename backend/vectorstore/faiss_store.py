@@ -22,7 +22,7 @@ class FaissVectorStore(BaseVectorStore):
         self.index.add(vectors)
         self.documents.extend(documents)
         
-    def search(self, query_vector: List[float], k: int = 3) -> List[Tuple[ChunkDocument, float]]:
+    def search(self, query_vector: List[float], k: int = 5) -> List[Tuple[ChunkDocument, float]]:
         query = np.array([query_vector]).astype("float32")
         query = normalize(query)
         distances, indices = self.index.search(query, k)
