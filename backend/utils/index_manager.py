@@ -1,16 +1,21 @@
 import os
 import hashlib
 from typing import List
+from pathlib import Path
+
+BACKEND_DIR = Path(__file__).parent.parent
 
 class IndexManager:
-    def __init__(self, base_index_dir: str = "indices"):
+    def __init__(self, base_index_dir: str = None):
         """
         Initialize IndexManager with base directory for storing indices.
         
         :param base_index_dir: Base directory where indices will be stored.
         """
+        if base_index_dir is None:
+            base_index_dir = str(BACKEND_DIR / "indices")
         self.base_index_dir = base_index_dir
-        os.makedirs(base_index_dir, exist_ok=True)
+        os.makedirs(self.base_index_dir, exist_ok=True)
     
     def get_index_path(self, pdf_paths: List[str]) -> str:
         """

@@ -85,7 +85,7 @@ const DashboardPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
             <StatsCard
               title="Documents"
-              value={systemStatus.vectorstore.document_count}
+              value={systemStatus.vectorstore.chunk_count}
               description={`${systemStatus.vectorstore.has_documents ? 'Index ready' : 'No documents indexed'}`}
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

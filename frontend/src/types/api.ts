@@ -96,6 +96,7 @@ export interface SystemStatus {
   vectorstore: {
     has_documents: boolean;
     document_count: number;
+    chunk_count: number;
     index_ready: boolean;
   };
   data_directory: {

@@ -3,6 +3,7 @@ import asyncio
 from typing import Dict, List, Any
 from pathlib import Path
 import os
+import shutil
 
 from backend.reader.pdf_reader import PDFReader
 from backend.chunker.structure_aware_chunker import StructureAwareChunker
@@ -12,6 +13,8 @@ from backend.generator.cohere_generator import CohereGenerator
 from backend.reranker.hf_reranker import HuggingFaceReranker
 from backend.utils.index_manager import IndexManager
 from backend.models.chunk_document import ChunkDocument
+
+BACKEND_DIR = Path(__file__).parent.parent
 
 class RAGSystem:
     def __init__(self):
@@ -39,7 +42,7 @@ class RAGSystem:
     
     def _get_pdf_files(self) -> List[str]:
         """Get all PDF files from data directory"""
-        data_dir = Path("data")
+        data_dir = BACKEND_DIR / "data"
         if not data_dir.exists():
             data_dir.mkdir()
             return []
@@ -47,16 +50,18 @@ class RAGSystem:
     
     def _build_index(self, pdf_files: List[str]):
         """Build index from PDF files"""
+        index_path = self.index_manager.get_index_path(pdf_files)
+        # Remove old index if exists
+        if os.path.exists(index_path):
+            shutil.rmtree(index_path)
         for path in pdf_files:
             source_file = os.path.basename(path)
             pages = self.reader.read(path)
             chunk_docs = self.chunker.chunk(pages, source_file)
             embeddings = self.embedder.embed(chunk_docs)
             self.vectorstore.add(embeddings, chunk_docs)
-        
         # Save index
         if pdf_files:
-            index_path = self.index_manager.get_index_path(pdf_files)
             self.vectorstore.save(index_path)
     
     async def process_query(self, query: str, top_k: int = 5, use_self_rag: bool = True) -> Dict[str, Any]:
@@ -118,6 +123,12 @@ class RAGSystem:
     async def rebuild_index(self):
         """Rebuild index with current PDF files"""
         pdf_files = self._get_pdf_files()
+        # Remove all old indices before creating a new one
+        indices_dir = BACKEND_DIR / "indices"
+        if indices_dir.exists():
+            for item in indices_dir.iterdir():
+                if item.is_dir():
+                    shutil.rmtree(item)
         if pdf_files:
             # Clear current index
             self.vectorstore = FaissVectorStore()
