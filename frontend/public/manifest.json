@@ -1,0 +1,8 @@
+{
+  "short_name": "AskMyDocs",
+  "name": "AskMyDocs - Document Q&A with Self-RAG",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4f46e5",
+  "background_color": "#ffffff"
+}

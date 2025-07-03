@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gray-900: oklch(0.21 0 0); /* Tailwind v4 default gray-900 */
+  --color-gray-50: oklch(0.98 0 0);
+  --color-primary-600: oklch(0.55 0.14 264.29);
+  --color-primary-700: oklch(0.47 0.13 264.29);
+  --color-secondary-600: oklch(0.55 0.14 164.29);
+  --color-secondary-700: oklch(0.47 0.13 164.29);
+  --color-red-600: oklch(0.55 0.14 29.29);
+  --color-red-700: oklch(0.47 0.13 29.29);
+  --color-gray-300: oklch(0.83 0.01 264.29);
+  --color-gray-100: oklch(0.96 0.01 264.29);
+  --color-gray-700: oklch(0.32 0.01 264.29);
+  --color-primary-500: oklch(0.62 0.15 264.29);
+}
+
+@layer base {
+  html {
+    color: var(--color-gray-900);
+  }
+  body {
+    min-height: 100vh;
+    background-color: var(--color-gray-50);
+  }
+  h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  .btn {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-duration: 150ms;
+  }
+  .btn-primary {
+    composes: btn;
+    background-color: var(--color-primary-600);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-primary-700);
+  }
+  .btn-secondary {
+    composes: btn;
+    background-color: var(--color-secondary-600);
+    color: #fff;
+  }
+  .btn-secondary:hover {
+    background-color: var(--color-secondary-700);
+  }
+  .btn-outline {
+    composes: btn;
+    border: 1px solid var(--color-gray-300);
+  }
+  .btn-outline:hover {
+    background-color: var(--color-gray-100);
+  }
+  .btn-danger {
+    composes: btn;
+    background-color: var(--color-red-600);
+    color: #fff;
+  }
+  .btn-danger:hover {
+    background-color: var(--color-red-700);
+  }
+  .input {
+    width: 100%;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: 0.375rem;
+    outline: none;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .input:focus {
+    box-shadow: 0 0 0 2px var(--color-primary-500);
+    border-color: transparent;
+  }
+  .label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-gray-700);
+    margin-bottom: 0.25rem;
+  }
+  .card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    padding: 1.5rem;
+  }
+}
