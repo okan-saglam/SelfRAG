@@ -65,18 +65,4 @@ SelfRAG consists of two main components:
 - **Frontend (React):**
   - Provides the user interface, session management, document upload, and query screens.
 
-### Flow Diagram
-
-```mermaid
-
-graph TD
-    A[User] --> B[Frontend (React)]
-    B --> C[Backend (FastAPI)]
-    C --> D[Document Reading & Chunking]
-    D --> E[Embedding & Vector Search (FAISS)]
-    E --> F[Reranker]
-    F --> G[Answer Generation (Generator)]
-    G --> B
-```
-
 ---
