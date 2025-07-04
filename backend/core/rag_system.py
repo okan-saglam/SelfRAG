@@ -66,7 +66,7 @@ class RAGSystem:
         if pdf_files:
             self.vectorstore.save(index_path)
     
-    async def process_query(self, query: str, top_k: int = 5, use_self_rag: bool = True) -> Dict[str, Any]:
+    async def process_query(self, query: str, top_k: int = 10, use_self_rag: bool = True) -> Dict[str, Any]:
         """
         Process query with optional Self-RAG
         """
@@ -78,7 +78,7 @@ class RAGSystem:
         ])[0]
         
         # Initial retrieval
-        initial_chunks = self.vectorstore.search(query_vector, k=20)
+        initial_chunks = self.vectorstore.search(query_vector, k=50)
         
         # Rerank
         reranked_chunks = self.reranker.rerank(query, initial_chunks, top_k=top_k)
@@ -191,7 +191,7 @@ class RAGSystem:
             prompt=prompt,
             model="command-r-plus",
             max_tokens=60,
-            temperature=0.0,
+            temperature=0.3,
         )
         text = response.generations[0].text.strip().lower() if response.generations else "no"
         sufficient = text.startswith("yes")

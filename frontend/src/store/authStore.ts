@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '../types/api';
 import { authService } from '../services/authService';
+import { useDocumentStore } from './documentStore';
 
 interface AuthState {
   user: User | null;
@@ -33,6 +34,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
+      // Query state'lerini sıfırla
+      useDocumentStore.getState().clearQueryResult();
+      useDocumentStore.getState().clearError();
     } catch (error: any) {
       set({ 
         isLoading: false,
@@ -40,6 +44,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: false,
         user: null,
       });
+      useDocumentStore.getState().clearQueryResult();
+      useDocumentStore.getState().clearError();
     }
   },
   
@@ -70,6 +76,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user: null,
       isAuthenticated: false,
     });
+    // Query state'lerini sıfırla
+    useDocumentStore.getState().clearQueryResult();
+    useDocumentStore.getState().clearError();
   },
   
   loadUser: async () => {

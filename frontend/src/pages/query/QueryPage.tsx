@@ -72,7 +72,7 @@ const QueryPage: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label htmlFor="topK" className="label">Number of chunks to retrieve</label>
+              <label htmlFor="topK" className="label">Number of top-k chunks to retrieve</label>
               <input
                 id="topK"
                 type="number"

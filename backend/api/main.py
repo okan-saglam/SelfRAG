@@ -54,7 +54,8 @@ async def root():
 @app.post("/api/query", response_model=QueryResponse)
 async def query_documents(
     request: QueryRequest,
-    rag_system: RAGSystem = Depends(get_rag_system)
+    rag_system: RAGSystem = Depends(get_rag_system),
+    current_user=Depends(get_current_user)
 ):
     """
     Process a query using Self-RAG
@@ -75,6 +76,7 @@ async def query_documents(
             "processing_time": duration,
             "self_rag_score": self_rag_info["final_score"] if self_rag_info and "final_score" in self_rag_info else None,
             "created_at": datetime.utcnow(),
+            "username": current_user["username"]
         }
         await queries_collection.insert_one(query_doc)
         return QueryResponse(**result)
@@ -149,10 +151,10 @@ async def delete_document(filename: str, current_user=Depends(get_current_user))
     
 # --- Analytics Endpoint ---
 @app.get("/api/analytics/queries")
-async def get_query_analytics():
-    cursor = queries_collection.find().sort("created_at", -1)
+async def get_query_analytics(current_user=Depends(get_current_user)):
+    cursor = queries_collection.find({"username": current_user["username"]}).sort("created_at", -1)
     queries = await cursor.to_list(length=100)
-    total_queries = await queries_collection.count_documents({})
+    total_queries = await queries_collection.count_documents({"username": current_user["username"]})
     if queries:
         avg_processing_time = sum(q.get("processing_time", 0) for q in queries) / len(queries)
         avg_self_rag_score = sum(q.get("self_rag_score", 0) for q in queries if q.get("self_rag_score") is not None) / max(1, sum(1 for q in queries if q.get("self_rag_score") is not None))

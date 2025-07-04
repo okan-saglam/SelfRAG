@@ -28,8 +28,8 @@ class CohereGenerator(BaseGenerator):
         response = self.client.generate(
             prompt=prompt,
             model="command-r-plus",
-            max_tokens=300,
-            temperature=0.3,
+            max_tokens=1000,
+            temperature=0.0,
         )
         
         return response.generations[0].text.strip() if response.generations else "No answer generated."
