@@ -3,7 +3,7 @@ import type { Document, QueryRequest, QueryResponse, QueryAnalytics, SystemStatu
 
 export const documentService = {
   // Get all documents
-  getDocuments: async (): Promise<{ filename: string }[]> => {
+  getDocuments: async (): Promise<Document[]> => {
     const response = await apiClient.get('/api/documents');
     return response.data;
   },

@@ -30,7 +30,10 @@ app = FastAPI(
 # CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://self-rag.netlify.app/"],  # Allow all origins for development
+    allow_origins=[
+        "https://self-rag.netlify.app/",
+        "http://localhost:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
