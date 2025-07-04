@@ -68,14 +68,15 @@ SelfRAG consists of two main components:
 ### Flow Diagram
 
 ```mermaid
+
 graph TD
-A[User] --> B[Frontend (React)]
-B --> C[Backend (FastAPI)]
-C --> D[Document Reading & Chunking]
-D --> E[Embedding & Vector Search (FAISS)]
-E --> F[Reranker]
-F --> G[Answer Generation (Generator)]
-G --> B
+    A[User] --> B[Frontend (React)]
+    B --> C[Backend (FastAPI)]
+    C --> D[Document Reading & Chunking]
+    D --> E[Embedding & Vector Search (FAISS)]
+    E --> F[Reranker]
+    F --> G[Answer Generation (Generator)]
+    G --> B
 ```
 
 ---
