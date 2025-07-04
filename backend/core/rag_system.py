@@ -4,6 +4,7 @@ from typing import Dict, List, Any
 from pathlib import Path
 import os
 import shutil
+import numpy as np
 
 from backend.reader.pdf_reader import PDFReader
 from backend.chunker.structure_aware_chunker import StructureAwareChunker
@@ -25,6 +26,7 @@ class RAGSystem:
         self.generator = CohereGenerator()
         self.reranker = HuggingFaceReranker()
         self.index_manager = IndexManager()
+        self.llm = CohereGenerator()  # LLM değerlendirme ve refine için de kullanılacak
         
         # Initialize with existing documents
         self._initialize_index()
@@ -76,7 +78,7 @@ class RAGSystem:
         ])[0]
         
         # Initial retrieval
-        initial_chunks = self.vectorstore.search(query_vector, k=10)
+        initial_chunks = self.vectorstore.search(query_vector, k=20)
         
         # Rerank
         reranked_chunks = self.reranker.rerank(query, initial_chunks, top_k=top_k)
@@ -108,17 +110,112 @@ class RAGSystem:
             "self_rag_info": self_rag_info
         }
     
-    async def _evaluate_with_self_rag(self, query: str, chunks: List[ChunkDocument], answer: str) -> Dict[str, Any]:
+    async def _evaluate_with_self_rag(self, query: str, chunks: List[ChunkDocument], answer: str, max_iterations: int = 2) -> Dict[str, Any]:
         """
-        Self-RAG evaluation (basic implementation)
+        Self-RAG evaluation: Cevabın yeterliliğini LLM ile değerlendir, gerekirse yeni sorgu üret ve döngüsel olarak cevabı iyileştir.
         """
-        # Placeholder implementation - will be enhanced in Phase 2
+        current_query = query
+        current_answer = answer
+        history = []
+        for iteration in range(max_iterations):
+            # 1. Cevabın yeterliliğini LLM ile değerlendir
+            sufficient, explanation = await self._is_answer_sufficient_llm(current_query, current_answer)
+            history.append({
+                "iteration": iteration + 1,
+                "query": current_query,
+                "answer": current_answer,
+                "sufficient": sufficient,
+                "explanation": explanation
+            })
+            if sufficient:
+                break
+            # 2. Yeni bir sorgu üret (refine query) LLM ile
+            current_query = await self._refine_query_llm(current_query, current_answer)
+            # 3. Yeni sorgu ile retrieval ve generation
+            query_vector = self.embedder.embed([
+                ChunkDocument(text=current_query, page=0, chunk_id=0, source_file="query")
+            ])[0]
+            initial_chunks = self.vectorstore.search(query_vector, k=10)
+            reranked_chunks = self.reranker.rerank(current_query, initial_chunks, top_k=5)
+            chunks_for_generation = [chunk for chunk, _ in reranked_chunks]
+            current_answer = self.generator.generate_answer(current_query, chunks_for_generation)
+        # --- Retrieval confidence hesaplama ---
+        # İlk retrieval skorlarının normalize edilmiş ortalaması (inner product [-1,1] -> [0,1])
+        initial_scores = [score for _, score in self.vectorstore.search(self.embedder.embed([
+            ChunkDocument(text=query, page=0, chunk_id=0, source_file="query")
+        ])[0], k=10)]
+        if initial_scores:
+            retrieval_confidence = float(np.mean([(s + 1) / 2 for s in initial_scores]))
+        else:
+            retrieval_confidence = 0.0
+
+        # --- Generation confidence hesaplama ---
+        # Cohere'den likelihood desteği yoksa, cevabın belirsizliğine göre heuristik skor
+        def is_uncertain(text):
+            lower = text.lower()
+            return any(kw in lower for kw in ["emin değilim", "bilinmiyor", "bilgi yok", "bulunamadı", "not sure", "unknown", "cannot answer"])
+        if is_uncertain(current_answer):
+            generation_confidence = 0.3
+        else:
+            generation_confidence = 0.85
+
+        final_score = (retrieval_confidence + generation_confidence) / 2
+        reflection_notes = [
+            f"{len(history)} iterations performed.",
+            f"Retrieval confidence: {retrieval_confidence:.2f}",
+            f"Generation confidence: {generation_confidence:.2f}",
+            f"Final answer: {current_answer[:60]}..."
+        ]
         return {
-            "retrieval_confidence": 0.85,
-            "generation_confidence": 0.90,
-            "final_score": 0.87,
-            "reflection_notes": ["Good chunk relevance", "Answer covers main points"]
+            "final_query": current_query,
+            "final_answer": current_answer,
+            "iterations": len(history),
+            "history": history,
+            "retrieval_confidence": retrieval_confidence,
+            "generation_confidence": generation_confidence,
+            "final_score": final_score,
+            "reflection_notes": reflection_notes
         }
+
+    async def _is_answer_sufficient_llm(self, query: str, answer: str) -> (bool, str):
+        """
+        Evaluate if the answer sufficiently addresses the query using the LLM. Ask for a yes/no and a short explanation in English.
+        """
+        prompt = (
+            f"Question: {query}\n"
+            f"Answer: {answer}\n"
+            "Evaluate the above answer: Does this answer fully address the question?\n"
+            "Start your response with only 'yes' or 'no', then provide a brief explanation."
+        )
+        response = self.llm.client.generate(
+            prompt=prompt,
+            model="command-r-plus",
+            max_tokens=60,
+            temperature=0.0,
+        )
+        text = response.generations[0].text.strip().lower() if response.generations else "no"
+        sufficient = text.startswith("yes")
+        explanation = text
+        return sufficient, explanation
+
+    async def _refine_query_llm(self, query: str, answer: str) -> str:
+        """
+        Generate a better/refined query using the LLM, based on the previous answer. Prompt in English.
+        """
+        prompt = (
+            f"Question: {query}\n"
+            f"Answer: {answer}\n"
+            "Based on the above answer, how should I rephrase or expand the question to get a better and more detailed answer?\n"
+            "Please suggest a new and improved question. Only return the new question."
+        )
+        response = self.llm.client.generate(
+            prompt=prompt,
+            model="command-r-plus",
+            max_tokens=60,
+            temperature=0.3,
+        )
+        new_query = response.generations[0].text.strip() if response.generations else query
+        return new_query
     
     async def rebuild_index(self):
         """Rebuild index with current PDF files"""

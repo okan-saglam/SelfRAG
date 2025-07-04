@@ -107,14 +107,14 @@ const QueryPage: React.FC = () => {
             <button
               type="button"
               onClick={handleReset}
-              className="btn-outline mr-3"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none mr-3"
             >
               Reset
             </button>
             
             <button
               type="submit"
-              className="btn-primary"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none"
               disabled={isQuerying || !query.trim()}
             >
               {isQuerying ? 'Processing...' : 'Ask Question'}
@@ -142,22 +142,23 @@ const QueryPage: React.FC = () => {
             <div className="mb-8">
               <h3 className="text-lg font-semibold mb-2">Self-RAG Information</h3>
               <div className="bg-gray-50 p-4 rounded-md">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <span className="block text-sm text-gray-500">Retrieval Confidence</span>
-                    <span className="text-lg font-medium">{(queryResult.self_rag_info.retrieval_confidence * 100).toFixed(1)}%</span>
+                {queryResult.self_rag_info.retrieval_confidence !== undefined && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <span className="block text-sm text-gray-500">Retrieval Confidence</span>
+                      <span className="text-lg font-medium">{(queryResult.self_rag_info.retrieval_confidence * 100).toFixed(1)}%</span>
+                    </div>
+                    <div>
+                      <span className="block text-sm text-gray-500">Generation Confidence</span>
+                      <span className="text-lg font-medium">{(queryResult.self_rag_info.generation_confidence * 100).toFixed(1)}%</span>
+                    </div>
+                    <div>
+                      <span className="block text-sm text-gray-500">Final Score</span>
+                      <span className="text-lg font-medium">{(queryResult.self_rag_info.final_score * 100).toFixed(1)}%</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block text-sm text-gray-500">Generation Confidence</span>
-                    <span className="text-lg font-medium">{(queryResult.self_rag_info.generation_confidence * 100).toFixed(1)}%</span>
-                  </div>
-                  <div>
-                    <span className="block text-sm text-gray-500">Final Score</span>
-                    <span className="text-lg font-medium">{(queryResult.self_rag_info.final_score * 100).toFixed(1)}%</span>
-                  </div>
-                </div>
-                
-                {queryResult.self_rag_info.reflection_notes.length > 0 && (
+                )}
+                {queryResult.self_rag_info.reflection_notes && queryResult.self_rag_info.reflection_notes.length > 0 && (
                   <div>
                     <h4 className="text-md font-medium mb-2">Reflection Notes</h4>
                     <ul className="list-disc pl-5 space-y-1">

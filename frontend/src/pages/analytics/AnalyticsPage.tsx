@@ -50,7 +50,7 @@ const AnalyticsPage: React.FC = () => {
         {error}
         <button 
           onClick={() => window.location.reload()} 
-          className="ml-2 underline"
+          className="ml-2 btn-outline"
         >
           Try again
         </button>

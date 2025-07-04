@@ -15,6 +15,8 @@ import QueryPage from '../pages/query/QueryPage';
 import AnalyticsPage from '../pages/analytics/AnalyticsPage';
 import ProfilePage from '../pages/profile/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
+import AdminRequestsPage from '../pages/admin/AdminRequestsPage';
+import ExploreDocumentPage from '../pages/explore/ExploreDocumentPage';
 
 // Protected route component
 interface ProtectedRouteProps {
@@ -51,6 +53,8 @@ const AppRouter: React.FC = () => {
           <Route path="query" element={<QueryPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="admin-requests" element={<AdminRequestsPage />} />
+          <Route path="explore" element={<ExploreDocumentPage />} />
         </Route>
         
         {/* 404 Not Found */}

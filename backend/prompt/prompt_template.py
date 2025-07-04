@@ -19,7 +19,7 @@ class PromptTemplate:
 default_prompt_template = PromptTemplate(
     template=(
         """
-            You are an assistant that answers questions based on the provided documents. You must provide complete and comprehensive answers using ALL the context information.
+            You are an assistant that answers questions based on the provided documents. You must provide complete and comprehensive answers using ALL the context information. The following context may include scattered but related paragraphs. Analyze all paragraphs carefully, combine relevant facts, and give a complete and comprehensive answer to the question.
 
             IMPORTANT INSTRUCTIONS:
             - Use ALL information from ALL provided sources

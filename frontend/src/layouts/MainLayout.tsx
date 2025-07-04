@@ -11,7 +11,8 @@ import {
   UserIcon,
   Bars3Icon,
   XMarkIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 // Logo component
@@ -30,6 +31,7 @@ const Logo: React.FC = () => (
 const navItems = [
   { name: 'Dashboard', path: '/dashboard', icon: HomeIcon },
   { name: 'Documents', path: '/documents', icon: DocumentTextIcon },
+  { name: 'Explore', path: '/explore', icon: DocumentTextIcon },
   { name: 'Query', path: '/query', icon: QuestionMarkCircleIcon },
   { name: 'Analytics', path: '/analytics', icon: ChartBarIcon },
   { name: 'Profile', path: '/profile', icon: UserIcon },
@@ -107,6 +109,23 @@ const MainLayout: React.FC = () => {
                 </div>
               </Link>
             ))}
+            {/* Admin Panel butonu - mobile */}
+            {user?.is_admin && (
+              <Link
+                to="/admin-requests"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  location.pathname === '/admin-requests'
+                    ? 'text-primary-700 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-primary-50'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <div className="flex items-center">
+                  <ShieldCheckIcon className="mr-3 h-5 w-5" />
+                  Admin Panel
+                </div>
+              </Link>
+            )}
             {user && (
               <button
                 onClick={() => {
@@ -144,6 +163,20 @@ const MainLayout: React.FC = () => {
                     {item.name}
                   </Link>
                 ))}
+                {/* Admin Panel butonu - desktop */}
+                {user?.is_admin && (
+                  <Link
+                    to="/admin-requests"
+                    className={`flex items-center px-3 py-3 rounded-md text-sm font-medium ${
+                      location.pathname === '/admin-requests'
+                        ? 'text-primary-700 bg-primary-50'
+                        : 'text-gray-700 hover:text-primary-700 hover:bg-primary-50'
+                    }`}
+                  >
+                    <ShieldCheckIcon className="mr-3 h-5 w-5" />
+                    Admin Panel
+                  </Link>
+                )}
               </nav>
             </div>
           </div>

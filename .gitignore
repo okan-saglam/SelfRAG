@@ -22,3 +22,4 @@ SelfRagVenv/
 
 # Jupyter notebooks checkpoints
 .ipynb_checkpoints/
+.cursorignore

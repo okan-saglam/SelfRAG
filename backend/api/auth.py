@@ -17,6 +17,7 @@ DB_NAME = os.getenv("DB_NAME", "selfRAG")
 client = AsyncIOMotorClient(MONGODB_URI)
 db = client[DB_NAME]
 users_collection = db["users"]
+admin_requests_collection = db["admin_requests"]
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -93,4 +94,39 @@ async def refresh_token(request: Request):
         "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": {k: user[k] for k in UserOut.__fields__ if k in user}
-    } 
+    }
+
+def get_username_from_user(user):
+    return user["username"] if isinstance(user, dict) else getattr(user, "username", None)
+
+@router.post("/request-admin")
+async def request_admin(current_user=Depends(get_current_user)):
+    username = get_username_from_user(current_user)
+    if current_user.get("is_admin", False):
+        raise HTTPException(status_code=400, detail="You are already an admin.")
+    existing = await admin_requests_collection.find_one({"username": username})
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already requested admin access.")
+    await admin_requests_collection.insert_one({"username": username, "requested_at": datetime.utcnow()})
+    return {"message": "Admin access request submitted."}
+
+@router.get("/admin-requests")
+async def get_admin_requests(current_user=Depends(get_current_user)):
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Only admins can view admin requests.")
+    requests = await admin_requests_collection.find().to_list(length=100)
+    for req in requests:
+        req["id"] = str(req["_id"])
+        del req["_id"]
+    return requests
+
+@router.post("/approve-admin/{username}")
+async def approve_admin(username: str, current_user=Depends(get_current_user)):
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Only admins can approve admin requests.")
+    user = await users_collection.find_one({"username": username})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    await users_collection.update_one({"username": username}, {"$set": {"is_admin": True}})
+    await admin_requests_collection.delete_one({"username": username})
+    return {"message": f"{username} is now an admin."} 

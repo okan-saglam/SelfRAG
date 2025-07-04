@@ -61,11 +61,22 @@ export interface ChunkInfo {
   score: number;
 }
 
+export interface SelfRAGIteration {
+  iteration: number;
+  query: string;
+  answer: string;
+  sufficient: boolean;
+  explanation: string;
+}
+
 export interface SelfRAGInfo {
   retrieval_confidence: number;
   generation_confidence: number;
   final_score: number;
   reflection_notes: string[];
+  history?: SelfRAGIteration[];
+  final_query?: string;
+  final_answer?: string;
 }
 
 export interface QueryResponse {

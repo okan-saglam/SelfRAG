@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from typing import List, Optional
+from fastapi.responses import JSONResponse, FileResponse
+from typing import List, Optional, Tuple
 import os
 import sys
 from pathlib import Path
@@ -9,6 +9,9 @@ import time
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 from dotenv import load_dotenv
+import base64
+
+from backend.reader.pdf_reader import PDFReader
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -16,7 +19,7 @@ sys.path.insert(0, str(project_root))
 from backend.api.models import QueryRequest, QueryResponse, DocumentResponse
 from backend.api.dependencies import get_rag_system
 from backend.core.rag_system import RAGSystem
-from backend.api.auth import router as auth_router
+from backend.api.auth import router as auth_router, get_current_user
 
 app = FastAPI(
     title="AskMyDocs API",
@@ -79,10 +82,12 @@ async def query_documents(
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/api/documents/upload")
-async def upload_documents(files: List[UploadFile] = File(...)):
+async def upload_documents(files: List[UploadFile] = File(...), current_user=Depends(get_current_user)):
     """
-    Upload and process documents
+    Upload and process documents (admin only)
     """
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Only admin users can upload documents.")
     try:
         uploaded_files = []
         data_dir = BACKEND_DIR / "data"
@@ -123,10 +128,12 @@ async def list_documents():
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.delete("/api/documents/{filename}")
-async def delete_document(filename: str):
+async def delete_document(filename: str, current_user=Depends(get_current_user)):
     """
-    Delete a document
+    Delete a document (admin only)
     """
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Only admin users can delete documents.")
     try:
         data_dir = BACKEND_DIR / "data"
         file_path = data_dir / filename
@@ -210,6 +217,46 @@ async def rebuild_index(background_tasks: BackgroundTasks):
         "document_count": len(pdf_files),
         "status": "rebuilding"
     }
+    
+@app.get("/api/documents/{filename}/pages")
+async def get_pdf_pages(filename: str):
+    """
+    Return the text content of each page in the given PDF file.
+    """
+    data_dir = BACKEND_DIR / "data"
+    file_path = data_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    reader = PDFReader()
+    try:
+        pages = reader.read(str(file_path))  # List[Tuple[int, str]]
+        return [{"page": page_num, "text": text} for page_num, text in pages]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read PDF: {e}")
+    
+@app.get("/api/documents/{filename}/download")
+async def download_pdf(filename: str):
+    """
+    Download the original PDF file.
+    """
+    data_dir = BACKEND_DIR / "data"
+    file_path = data_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(str(file_path), media_type="application/pdf", filename=filename)
+    
+@app.get("/api/documents/{filename}/base64")
+async def get_pdf_base64(filename: str):
+    """
+    Return the PDF file as a base64-encoded string.
+    """
+    data_dir = BACKEND_DIR / "data"
+    file_path = data_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    with open(file_path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode("utf-8")
+    return {"filename": filename, "content": encoded}
     
 if __name__ == "__main__":
     import uvicorn

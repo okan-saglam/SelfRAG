@@ -135,7 +135,7 @@ const ProfilePage: React.FC = () => {
               <div className="mt-6 flex justify-end">
                 <button 
                   type="submit" 
-                  className="btn-primary"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Saving...' : 'Save Changes'}

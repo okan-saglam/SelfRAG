@@ -69,7 +69,7 @@ const LoginPage: React.FC = () => {
         
         <button 
           type="submit" 
-          className="btn-primary w-full"
+          className="inline-flex items-center justify-center text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none w-full"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Signing in...' : 'Sign In'}

@@ -1,12 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDocumentStore } from '../../store/documentStore';
+import { useAuthStore } from '../../store/authStore';
+import { documentService } from '../../services/documentService';
 
 // File Upload Component
 const DocumentUpload: React.FC = () => {
   const { uploadDocuments, isLoading } = useDocumentStore();
+  const { user } = useAuthStore();
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isAdmin = user?.is_admin;
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -68,12 +72,14 @@ const DocumentUpload: React.FC = () => {
           className="hidden"
           ref={fileInputRef}
           onChange={handleFileChange}
+          disabled={!isAdmin}
         />
         
         <button
           type="button"
-          className="mt-4 btn-primary"
-          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none mt-2"
+          onClick={() => isAdmin && fileInputRef.current?.click()}
+          disabled={!isAdmin}
         >
           Select Files
         </button>
@@ -105,22 +111,54 @@ const DocumentUpload: React.FC = () => {
           <div className="mt-4 flex justify-end">
             <button
               type="button"
-              className="btn-outline mr-3"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none mr-3"
               onClick={() => setFiles([])}
+              disabled={!isAdmin}
             >
               Cancel
             </button>
             <button
               type="button"
-              className="btn-primary"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none"
               onClick={handleUpload}
-              disabled={isLoading}
+              disabled={isLoading || !isAdmin}
             >
               {isLoading ? 'Uploading...' : 'Upload Files'}
             </button>
           </div>
         </div>
       )}
+      {!isAdmin && (
+        <div className="mt-4">
+          <RequestAdminButton />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Admin olma isteği butonu
+const RequestAdminButton: React.FC = () => {
+  const [status, setStatus] = useState<'idle'|'loading'|'success'|'error'>("idle");
+  const [message, setMessage] = useState<string>("");
+  const handleRequest = async () => {
+    setStatus("loading");
+    setMessage("");
+    try {
+      await documentService.requestAdmin();
+      setStatus("success");
+      setMessage("Your admin request has been received. Your account will be updated once approved by an admin.");
+    } catch (e: any) {
+      setStatus("error");
+      setMessage(e?.response?.data?.detail || "An error occurred during the request.");
+    }
+  };
+  return (
+    <div>
+      <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none" onClick={handleRequest} disabled={status==='loading'}>
+        {status==='loading' ? 'Sending...' : 'Request admin access'}
+      </button>
+      {message && <div className={`mt-2 text-sm ${status==='success' ? 'text-green-600' : 'text-red-600'}`}>{message}</div>}
     </div>
   );
 };
@@ -128,6 +166,8 @@ const DocumentUpload: React.FC = () => {
 // Document List Component
 const DocumentList: React.FC = () => {
   const { documents, fetchDocuments, deleteDocument, isLoading, error } = useDocumentStore();
+  const { user } = useAuthStore();
+  const isAdmin = user?.is_admin;
   
   useEffect(() => {
     fetchDocuments();
@@ -205,9 +245,9 @@ const DocumentList: React.FC = () => {
                       {formatFileSize(doc.size)}
                     </div>
                     <button
-                      onClick={() => deleteDocument(doc.filename)}
-                      disabled={isLoading}
-                      className="text-red-600 hover:text-red-900"
+                      onClick={() => isAdmin && deleteDocument(doc.filename)}
+                      disabled={isLoading || !isAdmin}
+                      className={`text-red-600 hover:text-red-900 ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       Delete
                     </button>
